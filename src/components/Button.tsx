@@ -1,13 +1,14 @@
 import type { ButtonHTMLAttributes } from 'react'
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'danger'
   fullWidth?: boolean
 }
 
 const variants = {
   primary: 'bg-brand text-brand-ink hover:brightness-110',
   secondary: 'border border-line bg-white text-ink hover:bg-page',
+  danger: 'bg-bad-fg text-white hover:brightness-110',
 }
 
 export function Button({ variant = 'primary', fullWidth = false, className = '', type = 'button', ...rest }: Props) {

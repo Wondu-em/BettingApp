@@ -4,10 +4,14 @@ import { ApiError } from './api/client'
 import { AuthProvider } from './auth/AuthContext'
 import { HomeRedirect, RequireAuth, RequireRole } from './auth/guards'
 import { AppShell } from './layouts/AppShell'
-import { ComingSoon } from './pages/ComingSoon'
 import { Events } from './pages/Events'
 import { Login } from './pages/Login'
 import { MyBets } from './pages/MyBets'
+import { EventConsole } from './pages/admin/EventConsole'
+import { AdminAudit } from './pages/admin/AdminAudit'
+import { AdminDeposits } from './pages/admin/AdminDeposits'
+import { AdminOverview } from './pages/admin/AdminOverview'
+import { AdminUsers } from './pages/admin/AdminUsers'
 import { NotFound } from './pages/NotFound'
 import { Wallet } from './pages/Wallet'
 
@@ -38,11 +42,11 @@ export function AppRoutes() {
           </Route>
 
           <Route element={<RequireRole role="Admin" />}>
-            <Route path="/admin" element={<ComingSoon title="Overview" />} />
-            <Route path="/admin/events" element={<ComingSoon title="Event console" />} />
-            <Route path="/admin/deposits" element={<ComingSoon title="Deposits & webhooks" />} />
-            <Route path="/admin/audit" element={<ComingSoon title="Audit log" />} />
-            <Route path="/admin/users" element={<ComingSoon title="Users" />} />
+            <Route path="/admin" element={<AdminOverview />} />
+            <Route path="/admin/events" element={<EventConsole />} />
+            <Route path="/admin/deposits" element={<AdminDeposits />} />
+            <Route path="/admin/audit" element={<AdminAudit />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
