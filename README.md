@@ -55,8 +55,6 @@ public URL changes.
 `VITE_API_BASE_URL` is public client configuration, not a place for secrets. Never put JWT
 signing keys, webhook secrets, or other credentials in frontend environment variables.
 
-`VITE_API_BASE_URL` is public client configuration, not a place for secrets. Never put
-JWT signing keys, webhook secrets, or other credentials in frontend environment variables.
 
 ## Available scripts
 

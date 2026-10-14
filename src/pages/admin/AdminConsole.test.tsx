@@ -77,6 +77,29 @@ describe('Admin users', () => {
 describe('Admin audit log', () => {
   it('filters and shows audit details and actor identity', async () => {
     const { calls } = mockApi({
+      'GET /api/admin/users': ({ url }) => {
+        const page = Number(url.searchParams.get('page'))
+        return jsonResponse({
+          items: page === 1 ? [{
+            id: 'user-1',
+            email: 'user@example.test',
+            role: 'User',
+            createdAt: '2026-10-14T08:00:00Z',
+            walletBalance: 0,
+            currency: 'ETB',
+          }] : [{
+            id: 'actor-1',
+            email: 'admin@example.test',
+            role: 'Admin',
+            createdAt: '2026-10-14T08:00:00Z',
+            walletBalance: 0,
+            currency: 'ETB',
+          }],
+          page,
+          pageSize: 100,
+          total: 2,
+        })
+      },
       'GET /api/admin/audit': ({ url }) => jsonResponse({
         items: [{
           id: 42,
@@ -97,12 +120,12 @@ describe('Admin audit log', () => {
     renderApp('/admin/audit')
     const user = userEvent.setup()
 
-    await user.type(screen.getByLabelText('Action'), 'event.close')
-    await user.type(screen.getByLabelText('Entity type'), 'event')
-    await user.type(screen.getByLabelText('Actor ID'), 'actor-1')
+    await user.selectOptions(screen.getByLabelText('Action'), 'event.close')
+    await user.selectOptions(screen.getByLabelText('Entity type'), 'event')
+    await user.selectOptions(await screen.findByLabelText('Actor ID'), 'actor-1')
     await user.click(screen.getByRole('button', { name: 'Filter' }))
 
-    const row = await screen.findByText('event.close')
+    const row = await screen.findByRole('cell', { name: 'event.close' })
     expect(row).toBeInTheDocument()
     expect(screen.getByText('admin@example.test')).toBeInTheDocument()
     await user.click(screen.getByText('View'))
@@ -112,6 +135,9 @@ describe('Admin audit log', () => {
       expect(request?.url.searchParams.get('action')).toBe('event.close')
       expect(request?.url.searchParams.get('entityType')).toBe('event')
       expect(request?.url.searchParams.get('actorId')).toBe('actor-1')
+      expect(calls.some((call) =>
+        call.url.pathname === '/api/admin/users' && call.url.searchParams.get('page') === '2',
+      )).toBe(true)
     })
   })
 })

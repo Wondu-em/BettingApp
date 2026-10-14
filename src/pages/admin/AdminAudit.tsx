@@ -1,12 +1,48 @@
 import { useState, type FormEvent } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { adminApi } from '../../api/admin'
+import type { AdminUser } from '../../api/types'
 import { Button } from '../../components/Button'
-import { AdminFilterInput, AdminListPanel } from '../../components/admin/AdminListPanel'
+import { AdminFilterSelect, AdminListPanel } from '../../components/admin/AdminListPanel'
+import { ErrorBanner } from '../../components/ErrorBanner'
 import { PageHeader } from '../../components/PageHeader'
 import { formatDateTime } from '../../lib/format'
 
 const PAGE_SIZE = 20
+const ACTOR_PAGE_SIZE = 100
+
+const ACTIONS = [
+  'bet.place',
+  'deposit.confirmed',
+  'deposit.failed',
+  'deposit.pending',
+  'event.close',
+  'event.create',
+  'event.settle',
+  'event.void',
+  'user.login',
+  'user.register',
+  'wallet.deposit',
+  'wallet.withdraw',
+]
+
+const ENTITY_TYPES = ['bet', 'event', 'ledger_transaction', 'provider_deposit', 'user']
+
+async function listAllActors(): Promise<AdminUser[]> {
+  const actors: AdminUser[] = []
+  let total = 0
+  let page = 1
+
+  do {
+    const result = await adminApi.users({ page, pageSize: ACTOR_PAGE_SIZE })
+    actors.push(...result.items)
+    total = result.total
+    if (result.items.length === 0) break
+    page += 1
+  } while (actors.length < total)
+
+  return actors.sort((a, b) => a.email.localeCompare(b.email))
+}
 
 function formatData(data: string): string {
   try {
@@ -20,6 +56,12 @@ export function AdminAudit() {
   const [draft, setDraft] = useState({ action: '', entityType: '', actorId: '' })
   const [filters, setFilters] = useState(draft)
   const [page, setPage] = useState(1)
+
+  const actors = useQuery({
+    queryKey: ['admin', 'audit', 'actors'],
+    queryFn: listAllActors,
+    staleTime: 60_000,
+  })
 
   const audit = useQuery({
     queryKey: ['admin', 'audit', filters, page],
@@ -47,17 +89,47 @@ export function AdminAudit() {
     <>
       <PageHeader title="Audit log" />
       <form onSubmit={submit} className="mb-5 flex flex-wrap items-end gap-3">
-        <AdminFilterInput label="Action" value={draft.action} onChange={(action) => setDraft((current) => ({ ...current, action }))} />
-        <AdminFilterInput
+        <AdminFilterSelect
+          label="Action"
+          value={draft.action}
+          onChange={(action) => setDraft((current) => ({ ...current, action }))}
+          options={[
+            { value: '', label: 'All actions' },
+            ...ACTIONS.map((action) => ({ value: action, label: action })),
+          ]}
+        />
+        <AdminFilterSelect
           label="Entity type"
           value={draft.entityType}
           onChange={(entityType) => setDraft((current) => ({ ...current, entityType }))}
+          options={[
+            { value: '', label: 'All entity types' },
+            ...ENTITY_TYPES.map((entityType) => ({ value: entityType, label: entityType })),
+          ]}
         />
-        <AdminFilterInput
+        <AdminFilterSelect
           label="Actor ID"
           value={draft.actorId}
           onChange={(actorId) => setDraft((current) => ({ ...current, actorId }))}
+          options={[
+            {
+              value: '',
+              label: actors.isLoading ? 'Loading actors…' : 'All actors',
+            },
+            ...(actors.data ?? []).map((actor) => ({
+              value: actor.id,
+              label: `${actor.email} (${actor.id})`,
+            })),
+          ]}
         />
+        {actors.isError && (
+          <div className="w-full space-y-2">
+            <ErrorBanner error={actors.error} />
+            <Button variant="secondary" onClick={() => void actors.refetch()}>
+              Retry loading actors
+            </Button>
+          </div>
+        )}
         <Button type="submit">
           Filter
         </Button>
