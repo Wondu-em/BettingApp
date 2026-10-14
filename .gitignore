@@ -13,6 +13,7 @@ dist-ssr
 *.local
 coverage
 .vite
+.vercel
 *.tsbuildinfo
 
 # Environment variables may contain local configuration or secrets.

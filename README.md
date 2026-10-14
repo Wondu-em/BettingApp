@@ -29,19 +29,31 @@ npm run dev
 The proxy removes the `/api` prefix before forwarding requests. For example, frontend
 `/api/events` requests reach the API at `/events`.
 
-## Production API configuration
+## Deploy to Vercel with GitHub Actions
 
-When the deployed frontend and API use different origins, configure
-`VITE_API_BASE_URL` at build time or in the hosting provider's build environment. For the
-deployed API, the value is:
+The workflow at `.github/workflows/deploy-vercel.yml` runs lint, tests, and a production
+build for pushes to `main` and pull requests targeting `main`. A push to `main` deploys to
+Vercel Production; a pull request deploys a Vercel Preview.
 
-```text
-https://wallet-and-bet-settlement-service.onrender.com
-```
+1. Create or link a Vercel project for the `Wondu-em/BettingApp` GitHub repository.
+2. In GitHub, open **Settings → Secrets and variables → Actions**.
+3. Add the repository secret `VERCEL_TOKEN` using a Vercel access token.
+4. Add repository variables `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` from the linked project's
+   Vercel settings.
+5. Ensure the Vercel project uses the repository root as its Root Directory, `npm run build`
+   as its Build Command, and `dist` as its Output Directory.
+6. Do not set `VITE_API_BASE_URL` for this deployment. `vercel.json` rewrites same-origin
+   `/api/...` requests to the deployed Render API, avoiding a browser cross-origin API call.
+   It also rewrites frontend routes to `index.html` so direct navigation and refresh work.
+7. Push or merge a change to `main` to trigger the production deployment. Pull requests to
+   `main` trigger preview deployments.
 
-The frontend then sends requests directly to that API origin. The API must allow the
-frontend's origin through its CORS configuration. Alternatively, configure a hosting rewrite
-so API requests go through the frontend's origin and leave `VITE_API_BASE_URL` unset.
+The Vercel rewrite targets
+`https://wallet-and-bet-settlement-service.onrender.com`. Update `vercel.json` if the API
+public URL changes.
+
+`VITE_API_BASE_URL` is public client configuration, not a place for secrets. Never put JWT
+signing keys, webhook secrets, or other credentials in frontend environment variables.
 
 `VITE_API_BASE_URL` is public client configuration, not a place for secrets. Never put
 JWT signing keys, webhook secrets, or other credentials in frontend environment variables.
